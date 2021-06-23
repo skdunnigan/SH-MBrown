@@ -31,6 +31,7 @@ sjrwmd_dat <- readxl::read_xlsx(here::here('data', 'SJRWMD_Marineland_Data_2010-
   janitor::clean_names()
 
 dat <- dat %>%
+        filter(dredge != "pre") %>%
         mutate(site = factor(site,
                              levels = c('RI',
                                         'MI',
@@ -88,46 +89,105 @@ rm(sjr_2017, sjr_2018)
 # boxplots -------------------------------------------------------------
 
 # all sites, dredge timeframes
+
+# set up new strip title names
+dredge_labs <- c("Dredge", "Post-Dredge")
+names(dredge_labs) <- c('dredge', 'post')
+
 dat %>%
-  filter(dredge != "pre") %>%
-  ggplot(aes(x = site_no, y = average_sal_pss)) +
-  geom_boxplot(aes(fill = site_no), alpha = 0.8) +
-  facet_grid(. ~ dredge) +
-  scale_color_manual(values = site_colours) +
+  ggplot(aes(x = site_no, y = average_sal_pss, fill = site_no)) +
+  geom_boxplot() +
+  facet_grid(. ~ dredge,
+             labeller = labeller(dredge = dredge_labs)) +
   scale_fill_manual(values = site_colours) +
   theme_bw() +
-  theme(legend.title = element_blank())
+  theme(legend.position = "none",
+        text = element_text(size = 12, color = 'black'),
+        axis.text = element_text(size = 12, color = 'black')) +
+  labs(x = '',
+       y = 'Salinity (psu)')
+
+# single param, site, pre/post dredge
 
 # create label for chlorophyll plots
-chla_y_title <- expression(paste("Chlorophyll ", italic("a "), mu*"g/L"))
+chla_y_title <- expression(paste("Chlorophyll a  ", mu*"g/L"))
 # all sites
 dat %>%
-  dplyr::filter(dredge != "pre") %>%
-  ggplot(aes(x = site, y = chl_a_ug_l)) +
-  geom_boxplot(aes(fill = dredge)) +
-  scale_fill_manual(name = "Dredge Period", values = c('darkturquoise','darkorange')) +
-  theme_cowplot() +
-  labs(x = "Site",
+  ggplot(aes(x = site_no, y = chl_a_ug_l)) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
+  scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
+  ggpubr::theme_classic2() +
+  theme(text = element_text(size = 12, color = 'black'),
+        axis.text = element_text(size = 12, color = 'black')) +
+  labs(x = "",
        y = chla_y_title)
 
 #dissolved oxygen
 dat %>%
-  dplyr::filter(dredge != "pre") %>%
-  ggplot(aes(x = site, y = d_o_mg_l)) +
-  geom_boxplot(aes(fill = dredge)) +
-  scale_fill_manual(name = "Dredge Period", values = c('darkturquoise','darkorange')) +
-  theme_cowplot() +
-  labs(x = "Site",
+  ggplot(aes(x = site_no, y = d_o_mg_l)) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
+  # geom_point(aes(fill = dredge), size = 2, shape = 21, position = position_jitterdodge()) +
+  scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
+  ggpubr::theme_classic2() +
+  theme(text = element_text(size = 12, color = 'black'),
+        axis.text = element_text(size = 12, color = 'black')) +
+  labs(x = "",
        y = "Dissolved Oxygen mg/L")
 
+# din
+din_y_title <- expression(paste("Dissolved Inorganic Nitrogen   ", mu*"M"))
+dat %>%
+  ggplot(aes(x = site_no, y = din_u_m)) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
+  # geom_point(aes(fill = dredge), size = 2, shape = 21, position = position_jitterdodge()) +
+  scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
+  ggpubr::theme_classic2() +
+  theme(text = element_text(size = 12, color = 'black'),
+        axis.text = element_text(size = 12, color = 'black')) +
+  labs(x = "",
+       y = din_y_title)
+
+# tss
+dat %>%
+  ggplot(aes(x = site_no, y = corr_tss_mg_l)) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
+  scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
+  ggpubr::theme_classic2() +
+  theme(text = element_text(size = 12, color = 'black'),
+        axis.text = element_text(size = 12, color = 'black')) +
+  labs(x = "",
+       y = "Total Suspended Solids (mg/L)")
+
+# turb
+dat %>%
+  ggplot(aes(x = site_no, y = turbidiity_ntu)) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
+  scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
+  scale_y_continuous(breaks = seq(0, 60, by = 10)) +
+  ggpubr::theme_classic2() +
+  theme(text = element_text(size = 12, color = 'black'),
+        axis.text = element_text(size = 12, color = 'black')) +
+  labs(x = "",
+       y = "Turbidity (NTU)")
+
+dat %>%
+  ggplot(aes(x = site_no, y = turbidiity_ntu)) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
+  scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
+  scale_y_continuous(breaks = seq(0, 60, by = 10)) +
+  ggpubr::theme_classic2() +
+  theme(text = element_text(size = 12, color = 'black'),
+        axis.text = element_text(size = 12, color = 'black')) +
+  labs(x = "",
+       y = "Turbidity (NTU)")
 
 
 # individual sites, dredge timeframes
 
 dat %>%
-  filter(site == 'SB') %>%
+  filter(site == 'SB' & dredge != "pre") %>%
   ggplot(aes(x = dredge, y = chl_a_ug_l)) +
-  geom_boxplot(aes(color = dredge, fill = dredge), alpha = 0.5) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8, notch = TRUE) +
   theme_cowplot()
 
 
@@ -144,14 +204,15 @@ dat %>%
   geom_ribbon(data = sjr_dat_c, aes(x = date,
                                     ymin = (mean - sd),
                                     ymax = (mean + sd)),
-              fill = "gray88") +
-  geom_line(data = sjr_dat_c, aes(x = date, y = mean),
-            color = "black",
-            size = 1) +
+              fill = "gray90") +
   geom_line(aes(x = date, y = chl_a_ug_l, color = site_no), size = 1) +
   geom_point(aes(x = date, y = chl_a_ug_l, color = site_no), size = 1) +
+  geom_line(data = sjr_dat_c, aes(x = date, y = mean),
+            color = "black",
+            linetype = "longdash",
+            size = 1) +
   scale_color_manual(values = site_colours) +
-  scale_x_datetime(date_breaks = "months", date_labels = "%Y-%b") +
+  scale_x_datetime(date_breaks = "months", date_labels = "%y-%b") +
   scale_y_continuous(expand = c(0,0)) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.4),
