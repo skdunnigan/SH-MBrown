@@ -236,31 +236,43 @@ sjr_tss <- sjr_comp %>%
 
 # NH4
 
-dat %>%
+nh4_site5 <- dat %>%
   filter(site_number == 5 & dredge != "pre") %>%
   select(ammonium_u_m, dredge) %>%
   bind_rows(sjr_nh4) %>%
   ggplot(aes(x = dredge, y = ammonium_u_m)) +
-  geom_boxplot(aes(fill = dredge), alpha = 0.8, notch = T) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
   scale_fill_manual(values = c('#00798c','#edae49', 'gray')) +
-  theme_cowplot() +
+  scale_y_continuous(breaks = seq(0, 6, by = 1), expand= c(0,0), limits = c(0,7)) +
+  theme_classic() +
+  theme(text = element_text(family = "sans"),
+        panel.grid.major.y = element_line(colour = c("white")),
+        axis.text.y = element_text(colour = c("black", NA), size = 12),
+        axis.text.x = element_text(size = 12, color = 'black'),
+        axis.title = element_text(size = 20, face = "bold")) +
   theme(legend.title = element_blank()) +
   labs(x = '',
        y = 'Ammonium (um)')
+ggsave(here::here('output', 'nh4_site5.png'), plot = nh4_site5, dpi = 300)
 
 # TSS
-dat %>%
+tss_site5 <- dat %>%
   filter(site_number == 5 & dredge != "pre") %>%
   select(corr_tss_mg_l, dredge) %>%
   bind_rows(sjr_tss) %>%
   ggplot(aes(x = dredge, y = corr_tss_mg_l)) +
-  geom_boxplot(aes(fill = dredge), alpha = 0.8, notch = T) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
   scale_fill_manual(values = c('#00798c','#edae49', 'gray')) +
-  theme_cowplot() +
-  theme(legend.title = element_blank()) +
+  scale_y_continuous(breaks = seq(0, 120, by = 10), expand= c(0,0), limits = c(0,130)) +
+  theme_classic() +
+  theme(text = element_text(family = "sans"),
+        panel.grid.major.y = element_line(colour = c("white")),
+        axis.text.y = element_text(colour = c("black", NA, NA, NA), size = 12),
+        axis.text.x = element_text(size = 12, color = 'black'),
+        axis.title = element_text(size = 20, face = "bold")) +
   labs(x = '',
        y = 'Total Suspended Solids (mg/L)')
-
+ggsave(here::here('output', 'tss_site5.png'), plot = tss_site5, dpi = 300)
 # line graphs -------------------------------------------------------------
 
 # CHLA
