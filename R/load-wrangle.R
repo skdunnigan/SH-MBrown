@@ -226,8 +226,9 @@ sjr_comp <- sjrwmd_dat %>%
 
 sjr_nh4 <- sjr_comp %>%
   filter(parameter == "NH4-D") %>%
-  rename(ammonium_u_m = measured_value) %>%
+  mutate(ammonium_u_m = (measured_value*1000/14.01)) %>%
   select(-parameter)
+
 
 sjr_tss <- sjr_comp %>%
   filter(parameter == "TSS") %>%
