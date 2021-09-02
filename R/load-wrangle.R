@@ -193,9 +193,6 @@ sal <- dat %>%
   labs(x = "",
        y = "Salinity (psu)")
 
-
-
-
 # individual sites, dredge timeframes
 
 dat %>%
@@ -207,6 +204,7 @@ dat %>%
 
 ## 03.2 only Site 5 and sig params: SAL, NH4, TSS ----
 
+### pull out SJR data for site 5 for easier binding
 sjr_comp <- sjrwmd_dat %>%
   filter(parameter %in% c('NH4-D', 'TSS', 'Salinity') & measured_value > 0) %>%
   select(parameter, measured_value) %>%
@@ -305,24 +303,63 @@ multiplot_1 <-
              axis.title.y = element_blank(),
              title = element_text(size = 14)))
 
-# multiplot_2 <-
-#   (sal_site5 +
-#      labs(title = "Salinity (psu)") +
-#      theme(legend.position = "none",
-#            axis.title.y = element_blank(),
-#            axis.text.x = element_blank(),
-#            title = element_text(size = 14))) /
-#   (tss_site5 +
-#      labs(title = "Total Suspended Solids (mg/L)") +
-#      theme(legend.position = "none",
-#            axis.text.x = element_blank(),
-#            axis.title.y = element_blank(),
-#            title = element_text(size = 14))) /
-#   (nh4_site5 +
-#      labs(title = "Ammonium (\U00B5M)") +
-#      theme(legend.position = "bottom",
-#            axis.title.y = element_blank(),
-#            title = element_text(size = 14)))
+multiplot_2 <-
+  (sal +
+     labs(title = "Salinity (psu)") +
+     theme(legend.position = "none",
+           axis.title.y = element_blank(),
+           axis.text.x = element_blank(),
+           title = element_text(size = 10))) /
+  (tss +
+     labs(title = "Total Suspended Solids (mg/L)") +
+     theme(legend.position = "none",
+           axis.text.x = element_blank(),
+           axis.title.y = element_blank(),
+           title = element_text(size = 10))) /
+  (nh4 +
+     labs(title = "Ammonium (\U00B5M)") +
+     theme(legend.position = "bottom",
+           axis.title.y = element_blank(),
+           title = element_text(size = 10)))
+
+multiplot_3 <-
+  (sal +
+     labs(title = "A") +
+     theme(legend.position = "none",
+           axis.title.y = element_blank(),
+           axis.text.x = element_blank(),
+           title = element_text(size = 10))) /
+  (tss +
+     labs(title = "B") +
+     theme(legend.position = "none",
+           axis.text.x = element_blank(),
+           axis.title.y = element_blank(),
+           title = element_text(size = 10))) /
+  (nh4 +
+     labs(title = "C") +
+     theme(legend.position = "bottom",
+           axis.title.y = element_blank(),
+           title = element_text(size = 10)))
+
+multiplot_4 <-
+  (sal +
+     labs(title = "A") +
+     theme(legend.position = "none",
+           axis.title.y = element_blank(),
+           axis.text.x = element_blank(),
+           title = element_text(size = 14))) /
+  (tss +
+     labs(title = "B") +
+     theme(legend.position = "none",
+           axis.text.x = element_blank(),
+           axis.title.y = element_blank(),
+           title = element_text(size = 14))) /
+  (nh4 +
+     labs(title = "C") +
+     theme(legend.position = "bottom",
+           axis.title.y = element_blank(),
+           title = element_text(size = 14)))
+
 
 # 04 save plots -----------------------------------------------------------
 
@@ -335,4 +372,11 @@ ggsave(here::here('output', 'nh4_site5_v2.png'), plot = nh4_site5, dpi = 300)
 ggsave(here::here('output', 'tss_site5_v2.png'), plot = tss_site5, dpi = 300)
 ggsave(here::here('output', 'sal_site5_v2.png'), plot = sal_site5, dpi = 300)
 ## multiplot of single param, all sites
-ggsave(here::here('output','multiplot_v1.png'), plot = multiplot, dpi = 300)
+ggsave(here::here('output','multiplot_v1.png'), plot = multiplot_1, dpi = 300,
+       height = 6, width = 5, units = "in")
+ggsave(here::here('output','multiplot_v2.png'), plot = multiplot_2, dpi = 300,
+       height = 6, width = 5, units = "in")
+ggsave(here::here('output','multiplot_v3.png'), plot = multiplot_3, dpi = 300,
+       height = 6, width = 5, units = "in")
+ggsave(here::here('output','multiplot_v4.png'), plot = multiplot_4, dpi = 300,
+       height = 6, width = 5, units = "in")
