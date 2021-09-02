@@ -8,6 +8,7 @@ library(readxl)
 library(cowplot)
 library(lubridate)
 library(scales)
+library(patchwork)
 
 
 # set colors --------------------------------------------------------------
@@ -20,7 +21,7 @@ site_colours <- c(`Site 1` = '#5b9bd5',
                   `Site 6` = '#4472c4'
 )
 
-# load data ---------------------------------------------------------------
+# 01 load data ---------------------------------------------------------------
 
 dat <- readxl::read_xlsx(here::here('data', 'SH-data.xlsx'),
                          sheet = 'sh-env') %>%
@@ -30,6 +31,10 @@ sjrwmd_dat <- readxl::read_xlsx(here::here('data', 'SJRWMD_Marineland_Data_2010-
                                 sheet = "SJRWMD_Data_by_Parameter") %>%
   janitor::clean_names()
 
+
+# 02 wrangle and tidy data ---------------------------------------------------
+
+## sh nut
 dat <- dat %>%
         filter(dredge != "pre") %>%
         mutate(site = factor(site,
@@ -49,10 +54,11 @@ dat <- dat %>%
                dredge = factor(dredge,
                                levels = c('pre',
                                           'dredge',
-                                          'post')),
+                                          'post dredge')),
                site_number = as.character(site_number),
                site_no = paste0('Site ', site_number))
 
+## sjr nut
 sjr_new <- sjrwmd_dat %>%
             rename(datetime = sample_collection_date_and_time) %>%
             select(datetime, parameter, unit_of_measure, measured_value, mdl, pql) %>%
@@ -86,32 +92,13 @@ sjr_dat <- bind_rows(sjr_2017, sjr_2018) %>%
 rm(sjr_2017, sjr_2018)
 
 
-# boxplots -------------------------------------------------------------
+# 03 create boxplots -------------------------------------------------------------
 
-# all sites, dredge timeframes
-
-# set up new strip title names
-dredge_labs <- c("Dredge", "Post-Dredge")
-names(dredge_labs) <- c('dredge', 'post')
-
-dat %>%
-  ggplot(aes(x = site_no, y = average_sal_pss, fill = site_no)) +
-  geom_boxplot() +
-  facet_grid(. ~ dredge,
-             labeller = labeller(dredge = dredge_labs)) +
-  scale_fill_manual(values = site_colours) +
-  theme_bw() +
-  theme(legend.position = "none",
-        text = element_text(size = 12, color = 'black'),
-        axis.text = element_text(size = 12, color = 'black')) +
-  labs(x = '',
-       y = 'Salinity (psu)')
+## 03.1 all sites, dredge timeframes ----
 
 # single param, site, pre/post dredge
 
-# create label for chlorophyll plots
-chla_y_title <- expression(paste("Chlorophyll a  ", mu*"g/L"))
-# all sites
+# chlorophyll a
 dat %>%
   ggplot(aes(x = site_no, y = chl_a_ug_l)) +
   geom_boxplot(aes(fill = dredge), alpha = 0.8) +
@@ -120,7 +107,7 @@ dat %>%
   theme(text = element_text(size = 12, color = 'black'),
         axis.text = element_text(size = 12, color = 'black')) +
   labs(x = "",
-       y = chla_y_title)
+       y = "Chlorophyll a (\U00B5g/L)")
 
 #dissolved oxygen
 dat %>%
@@ -135,7 +122,6 @@ dat %>%
        y = "Dissolved Oxygen mg/L")
 
 # din
-din_y_title <- expression(paste("Dissolved Inorganic Nitrogen   ", mu*"M"))
 dat %>%
   ggplot(aes(x = site_no, y = din_u_m)) +
   geom_boxplot(aes(fill = dredge), alpha = 0.8) +
@@ -145,10 +131,10 @@ dat %>%
   theme(text = element_text(size = 12, color = 'black'),
         axis.text = element_text(size = 12, color = 'black')) +
   labs(x = "",
-       y = din_y_title)
+       y = "Dissolved Inorganic Nitrogen \U00B5M")
 
 # tss
-b <- dat %>%
+tss <- dat %>%
   ggplot(aes(x = site_no, y = corr_tss_mg_l)) +
   geom_boxplot(aes(fill = dredge), alpha = 0.8) +
   scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
@@ -156,15 +142,15 @@ b <- dat %>%
   theme_classic() +
   theme(text = element_text(family = "sans"),
         panel.grid.major.y = element_line(colour = c("white")),
-        axis.text.y = element_text(colour = c("black", NA, NA, NA), size = 12),
+        axis.text.y = element_text(colour = c("black", NA, NA, NA), size = 12), # NA built in to create gaps in axis
         axis.text.x = element_text(size = 12, color = 'black'),
         axis.title = element_text(size = 20, face = "bold")) +
   labs(x = "",
        y = "Total Suspended Solids (mg/L)")
-ggsave(here::here('output','tss_v1.png'), plot = b, dpi = 300)
+
 
 # ammonium
-c <- dat %>%
+nh4 <- dat %>%
   ggplot(aes(x = site_no, y = ammonium_u_m)) +
   geom_boxplot(aes(fill = dredge), alpha = 0.8) +
   scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
@@ -176,11 +162,11 @@ c <- dat %>%
         axis.text.x = element_text(size = 12, color = 'black'),
         axis.title = element_text(size = 20, face = "bold")) +
   labs(x = "",
-       y = "Ammonium (um)")
-ggsave(here::here('output','ammonium_v1.png'), plot = c, dpi = 300)
+       y = "Ammonium \U00B5M")
 
 
-# turb
+
+## turb
 dat %>%
   ggplot(aes(x = site_no, y = turbidiity_ntu)) +
   geom_boxplot(aes(fill = dredge), alpha = 0.8) +
@@ -192,12 +178,12 @@ dat %>%
   labs(x = "",
        y = "Turbidity (NTU)")
 
-### SALINITY
-a <- dat %>%
+## SALINITY
+sal <- dat %>%
   ggplot(aes(x = site_no, y = average_sal_pss)) +
   geom_boxplot(aes(fill = dredge), alpha = 0.8) +
   scale_fill_manual(name = "Dredge Period", values = c('#00798c','#edae49')) +
-  scale_y_continuous(breaks = seq(0, 40, by = 1), expand= c(0,0), limits = c(0,41)) +
+  scale_y_continuous(breaks = seq(0, 40, by = 1), expand= c(0,0), limits = c(10,41)) +
   theme_classic() +
   theme(text = element_text(family = "sans"),
         panel.grid.major.y = element_line(colour = c("white")),
@@ -206,7 +192,9 @@ a <- dat %>%
         axis.title = element_text(size = 20, face = "bold"))+
   labs(x = "",
        y = "Salinity (psu)")
-ggsave(here::here('output','salinity_v1.png'), plot = a, dpi = 300)
+
+
+
 
 # individual sites, dredge timeframes
 
@@ -217,10 +205,10 @@ dat %>%
   theme_cowplot()
 
 
-## only Site 5 and sig params: SAL, NH4, TSS -------------------------------
+## 03.2 only Site 5 and sig params: SAL, NH4, TSS ----
 
 sjr_comp <- sjrwmd_dat %>%
-  filter(parameter %in% c('NH4-D', 'TSS') & measured_value > 0) %>%
+  filter(parameter %in% c('NH4-D', 'TSS', 'Salinity') & measured_value > 0) %>%
   select(parameter, measured_value) %>%
   mutate(dredge = "SJRWMD 2010-2016")
 
@@ -229,6 +217,10 @@ sjr_nh4 <- sjr_comp %>%
   mutate(ammonium_u_m = (measured_value*1000/14.01)) %>%
   select(-parameter)
 
+sjr_sal <- sjr_comp %>%
+  filter(parameter == "Salinity") %>%
+  rename(average_sal_pss = measured_value) %>%
+  select(-parameter)
 
 sjr_tss <- sjr_comp %>%
   filter(parameter == "TSS") %>%
@@ -236,7 +228,6 @@ sjr_tss <- sjr_comp %>%
   select(-parameter)
 
 # NH4
-
 nh4_site5 <- dat %>%
   filter(site_number == 5 & dredge != "pre") %>%
   select(ammonium_u_m, dredge) %>%
@@ -246,15 +237,15 @@ nh4_site5 <- dat %>%
   scale_fill_manual(values = c('#00798c','#edae49', 'gray')) +
   scale_y_continuous(breaks = seq(0, 6, by = 1), expand= c(0,0), limits = c(0,7)) +
   theme_classic() +
-  theme(text = element_text(family = "sans"),
+  theme(legend.position = "none",
+        text = element_text(family = "sans"),
         panel.grid.major.y = element_line(colour = c("white")),
         axis.text.y = element_text(colour = c("black", NA), size = 12),
         axis.text.x = element_text(size = 12, color = 'black'),
         axis.title = element_text(size = 20, face = "bold")) +
   theme(legend.title = element_blank()) +
   labs(x = '',
-       y = 'Ammonium (um)')
-ggsave(here::here('output', 'nh4_site5.png'), plot = nh4_site5, dpi = 300)
+       y = 'Ammonium \U00B5M')
 
 # TSS
 tss_site5 <- dat %>%
@@ -266,60 +257,82 @@ tss_site5 <- dat %>%
   scale_fill_manual(values = c('#00798c','#edae49', 'gray')) +
   scale_y_continuous(breaks = seq(0, 120, by = 10), expand= c(0,0), limits = c(0,130)) +
   theme_classic() +
-  theme(text = element_text(family = "sans"),
+  theme(legend.position = "none",
+        text = element_text(family = "sans"),
         panel.grid.major.y = element_line(colour = c("white")),
         axis.text.y = element_text(colour = c("black", NA, NA, NA), size = 12),
         axis.text.x = element_text(size = 12, color = 'black'),
         axis.title = element_text(size = 20, face = "bold")) +
   labs(x = '',
        y = 'Total Suspended Solids (mg/L)')
-ggsave(here::here('output', 'tss_site5.png'), plot = tss_site5, dpi = 300)
-# line graphs -------------------------------------------------------------
 
-# CHLA
-sjr_dat_c <- sjr_dat %>% filter(parameter == "Chl-a")
-chla_y_title <- expression(paste("Chlorophyll  ", italic("a "), mu*"g/L"))
-
-dat %>%
-  filter(dredge != "pre") %>%
-  ggplot() +
-  geom_ribbon(data = sjr_dat_c, aes(x = date,
-                                    ymin = (mean - sd),
-                                    ymax = (mean + sd)),
-              fill = "gray90") +
-  geom_line(aes(x = date, y = chl_a_ug_l, color = site_no), size = 1) +
-  geom_point(aes(x = date, y = chl_a_ug_l, color = site_no), size = 1) +
-  geom_line(data = sjr_dat_c, aes(x = date, y = mean),
-            color = "black",
-            linetype = "longdash",
-            size = 1) +
-  scale_color_manual(values = site_colours) +
-  scale_x_datetime(date_breaks = "months", date_labels = "%y-%b") +
-  scale_y_continuous(expand = c(0,0)) +
+# Salinity
+sal_site5 <- dat %>%
+  filter(site_number == 5 & dredge != "pre") %>%
+  select(average_sal_pss, dredge) %>%
+  bind_rows(sjr_sal) %>%
+  ggplot(aes(x = dredge, y = average_sal_pss)) +
+  geom_boxplot(aes(fill = dredge), alpha = 0.8) +
+  scale_fill_manual(values = c('#00798c','#edae49', 'gray')) +
+  scale_y_continuous(breaks = seq(0, 40, by = 1), expand= c(0,0), limits = c(10,41)) +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.4),
-        legend.title = element_blank(),
-        text = element_text(size = 12)) +
-  labs(x = "Date (Year-Month)",
-       y = chla_y_title)
+  theme(legend.position = "none",
+        text = element_text(family = "sans"),
+        panel.grid.major.y = element_line(colour = c("white")),
+        axis.text.y = element_text(colour = c("black", NA, NA, NA), size = 12),
+        axis.text.x = element_text(size = 12, color = 'black'),
+        axis.title = element_text(size = 20, face = "bold")) +
+  labs(x = '',
+       y = 'Salinity (psu)')
 
+# 03.3 multiplots ----
+multiplot_1 <-
+(sal +
+   labs(title = "Salinity (psu)") +
+   theme(legend.position = "none",
+         axis.title.y = element_blank(),
+         axis.text.x = element_blank(),
+         title = element_text(size = 14))) /
+  (tss +
+     labs(title = "Total Suspended Solids (mg/L)") +
+     theme(legend.position = "none",
+           axis.text.x = element_blank(),
+           axis.title.y = element_blank(),
+           title = element_text(size = 14))) /
+    (nh4 +
+       labs(title = "Ammonium (\U00B5M)") +
+       theme(legend.position = "bottom",
+             axis.title.y = element_blank(),
+             title = element_text(size = 14)))
 
+# multiplot_2 <-
+#   (sal_site5 +
+#      labs(title = "Salinity (psu)") +
+#      theme(legend.position = "none",
+#            axis.title.y = element_blank(),
+#            axis.text.x = element_blank(),
+#            title = element_text(size = 14))) /
+#   (tss_site5 +
+#      labs(title = "Total Suspended Solids (mg/L)") +
+#      theme(legend.position = "none",
+#            axis.text.x = element_blank(),
+#            axis.title.y = element_blank(),
+#            title = element_text(size = 14))) /
+#   (nh4_site5 +
+#      labs(title = "Ammonium (\U00B5M)") +
+#      theme(legend.position = "bottom",
+#            axis.title.y = element_blank(),
+#            title = element_text(size = 14)))
 
+# 04 save plots -----------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-dat %>%
-  # filter(dredge != "pre") %>%
-  ggplot(aes(x = date, y = chl_a_ug_l, color = site)) +
-  geom_line(size = 1) +
-  # geom_point() +
-  scale_x_datetime(date_breaks = "months", date_labels = "%Y-%b") +
-  theme_cowplot() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.4))
+## single param, all sites
+ggsave(here::here('output','tss_v2.png'), plot = tss, dpi = 300)
+ggsave(here::here('output','ammonium_v2.png'), plot = nh4, dpi = 300)
+ggsave(here::here('output','salinity_v2.png'), plot = sal, dpi = 300)
+## single param, site 5 with SJRWMD data
+ggsave(here::here('output', 'nh4_site5_v2.png'), plot = nh4_site5, dpi = 300)
+ggsave(here::here('output', 'tss_site5_v2.png'), plot = tss_site5, dpi = 300)
+ggsave(here::here('output', 'sal_site5_v2.png'), plot = sal_site5, dpi = 300)
+## multiplot of single param, all sites
+ggsave(here::here('output','multiplot_v1.png'), plot = multiplot, dpi = 300)
