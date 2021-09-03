@@ -162,7 +162,7 @@ nh4 <- dat %>%
         axis.text.x = element_text(size = 12, color = 'black'),
         axis.title = element_text(size = 20, face = "bold")) +
   labs(x = "",
-       y = "Ammonium \U00B5M")
+       y = "Ammonium (\U00B5M)")
 
 
 
@@ -243,7 +243,7 @@ nh4_site5 <- dat %>%
         axis.title = element_text(size = 20, face = "bold")) +
   theme(legend.title = element_blank()) +
   labs(x = '',
-       y = 'Ammonium \U00B5M')
+       y = 'Ammonium (\U00B5M)')
 
 # TSS
 tss_site5 <- dat %>%
